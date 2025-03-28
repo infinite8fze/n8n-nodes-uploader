@@ -190,11 +190,6 @@ export class TwitterMediaUpload implements INodeType {
           },
         });
 
-
-                const authorizationHeader = {
-                  authorization: authHeader,
-                  'Cookie': 'guest_id=v1%3A174203852567889827; lang=en',
-                };
         const formData = new FormData();
         formData.append('command', 'INIT');
         const totalBytes = String(binaryData.length);
@@ -212,11 +207,34 @@ export class TwitterMediaUpload implements INodeType {
         formData.append('mediaType', mediaType);
         formData.append('media', binaryData, fileName);
 
+        // Add additional owners if provided
+        try {
+          const additionalOwners = this.getNodeParameter('additionalOwners', itemIndex) as string;
+          if (additionalOwners) {
+            // Clean up and validate the additional owners list
+            const ownersList = additionalOwners
+              .split(',')
+              .map(id => id.trim())
+              .filter(id => id.length > 0);
 
-                const requestHeaders = {
-                  authorization: authHeader,
-                  ...formData.getHeaders(),
-                };
+            if (ownersList.length > 100) {
+              throw new NodeOperationError(
+                this.getNode(),
+                'Maximum of 100 additional owners allowed'
+              );
+            }
+
+            formData.append('additional_owners', ownersList.join(','));
+          }
+        } catch (error) {
+          // If parameter doesn't exist or there's an error, continue without additional owners
+          console.log('No additional owners specified or error occurred:', error.message);
+        }
+
+        const requestHeaders = {
+          authorization: authHeader,
+          ...formData.getHeaders(),
+        };
         console.log('Sending request to Twitter API with FormData and manual OAuth...', {
           url: requestUrl,
           headers: requestHeaders,
