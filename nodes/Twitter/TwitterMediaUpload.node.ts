@@ -54,7 +54,16 @@ export class TwitterMediaUpload implements INodeType {
         default: '',
         required: false,
         description: 'Media data parameter'
-      }
+      },
+      {
+        displayName: 'Additional Owners',
+        name: 'additionalOwners',
+        type: 'string',
+        default: '',
+        required: false,
+        description: 'A comma-separated list of user IDs to set as additional owners allowed to use the media. Up to 100 additional owners can be specified.',
+        placeholder: '12345,67890',
+      },
     ],
   };
 
