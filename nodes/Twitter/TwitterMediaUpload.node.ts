@@ -64,6 +64,15 @@ export class TwitterMediaUpload implements INodeType {
         description: 'A comma-separated list of user IDs to set as additional owners allowed to use the media. Up to 100 additional owners can be specified.',
         placeholder: '12345,67890',
       },
+      {
+        displayName: 'Media Category',
+        name: 'mediaCategory',
+        type: 'string',
+        default: 'tweet_image',
+        required: false,
+        description: 'The category that represents how the media will be used. For tweets, use tweet_image (default), tweet_gif, or tweet_video.',
+        placeholder: 'tweet_image',
+      },
     ],
   };
 
@@ -97,10 +106,11 @@ export class TwitterMediaUpload implements INodeType {
     const items = this.getInputData();
     const returnData: INodeExecutionData[] = [];
 
-    const logMediaProperties = (binaryPropertyName: string, mediaData: string | null) => {
+    const logMediaProperties = (binaryPropertyName: string, mediaData: string | null, mediaCategory: string | null) => {
       console.log('Media Properties:');
       console.log(`  binaryPropertyName: ${binaryPropertyName} (Name of the binary property containing the image data)`);
       console.log(`  mediaData: ${mediaData ? 'Provided' : 'Not Provided'} (Media data as a string, overrides binaryPropertyName if provided)`);
+      console.log(`  mediaCategory: ${mediaCategory || 'Not Provided'} (Category that represents how media will be used)`);
     }
 
     for (let itemIndex = 0; itemIndex < items.length; itemIndex++) {
@@ -119,7 +129,16 @@ export class TwitterMediaUpload implements INodeType {
           mediaData = null;
         }
 
-        logMediaProperties(binaryPropertyName, mediaData);
+        // Get media category if provided
+        let mediaCategory;
+        try {
+          mediaCategory = this.getNodeParameter('mediaCategory', itemIndex) as string;
+        } catch (error) {
+          console.log('Media category not specified, using default');
+          mediaCategory = null;
+        }
+
+        logMediaProperties(binaryPropertyName, mediaData, mediaCategory);
 
         // Debug log available binary properties
         console.log('Available binary properties:', Object.keys(items[itemIndex].binary || {}));
@@ -179,15 +198,23 @@ export class TwitterMediaUpload implements INodeType {
           accessSecret: credentials.accessSecret as string
         }, this.getNode());
 
+        // Create params for OAuth header
+        const oauthParams: Record<string, string> = {
+          command: 'INIT',
+          totalBytes: String(binaryData.length),
+          mediaType: mediaType,
+        };
+
+        // Add media_category to params if provided
+        if (mediaCategory) {
+          oauthParams.media_category = mediaCategory;
+        }
+
         // Generate authorization header
         const authHeader = oauth.generateAuthHeader({
           url: requestUrl,
           method: 'POST',
-          params: {
-            command: 'INIT',
-            totalBytes: String(binaryData.length),
-            mediaType: mediaType,
-          },
+          params: oauthParams,
         });
 
         const formData = new FormData();
@@ -205,6 +232,12 @@ export class TwitterMediaUpload implements INodeType {
           );
         }
         formData.append('mediaType', mediaType);
+
+        // Add media_category to form data if provided
+        if (mediaCategory) {
+          formData.append('media_category', mediaCategory);
+        }
+
         formData.append('media', binaryData, fileName);
 
         // Add additional owners if provided
