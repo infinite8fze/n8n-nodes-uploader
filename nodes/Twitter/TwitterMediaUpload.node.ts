@@ -226,9 +226,11 @@ export class TwitterMediaUpload implements INodeType {
 
             formData.append('additional_owners', ownersList.join(','));
           }
-        } catch (error) {
+        } catch (error: unknown) {
           // If parameter doesn't exist or there's an error, continue without additional owners
-          console.log('No additional owners specified or error occurred:', error.message);
+          if (error instanceof Error) {
+            console.log('No additional owners specified or error occurred:', error.message);
+          }
         }
 
         const requestHeaders = {
