@@ -1,4 +1,4 @@
-# n8n-nodes-twitter-uploader
+# n8n-nodes-twitter-uploader-inf
 
 This is an n8n community node for uploading media to Twitter. It allows you to upload images to Twitter and returns the media ID that can be used in other Twitter operations.
 
@@ -15,10 +15,10 @@ Follow these steps to install this node in your n8n instance:
 
 ```bash
 # Using npm
-npm install n8n-nodes-twitter-uploader
+npm install n8n-nodes-twitter-uploader-inf
 
 # Using pnpm
-pnpm install n8n-nodes-twitter-uploader
+pnpm install n8n-nodes-twitter-uploader-inf
 ```
 
 ## Configuration
